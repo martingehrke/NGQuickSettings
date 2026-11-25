@@ -2,7 +2,7 @@
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local NeoQuickSettings
 
-NeoCaptureState = {
+local NeoCaptureState = {
     cb = nil,
     path = {},
     active = false
@@ -35,7 +35,6 @@ local GestureRange    = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local IconWidget      = require("ui/widget/iconwidget")
-local LeftContainer   = require("ui/widget/container/leftcontainer")
 local NetworkMgr      = require("ui/network/manager")
 local ConfirmBox      = require("ui/widget/confirmbox")
 local TextWidget      = require("ui/widget/textwidget")
@@ -66,7 +65,6 @@ local icon_picker_err = ""
 local ok_ip, showIconPickerDialog = pcall(require, "common/neo_icon_picker")
 if not ok_ip then 
     icon_picker_err = tostring(showIconPickerDialog)
-    local logger = require("logger")
     logger.err("Failed to load neo_icon_picker:", showIconPickerDialog)
     showIconPickerDialog = nil 
 end
@@ -81,33 +79,28 @@ local config_defaults = {
         ["button_items_per_row"] = 8,
         ["button_order"] = {
             [1] = "wifi",
-            [2] = "favgrp_1",
-            [3] = "rotate",
-            [4] = "filebrowserplus",
-            [5] = "night",
-            [6] = "sleep",
-            [7] = "read_goal_pages",
-            [8] = "read_goal_time",
-            [9] = "screenshot",
-            [10] = "ssh",
-            [11] = "localsend",
-            [12] = "restart",
-            [13] = "exit",
-            [14] = "cb_1",
-            [15] = "settings",
-            [16] = "cb_2",
-            [17] = "search",
-            [18] = "kosync",
-            [19] = "bluetooth",
-            [20] = "streak",
-            [21] = "opds",
-            [22] = "stats_progress",
-            [23] = "stats_calendar",
-            [24] = "battery_stats",
-            [25] = "bookfusion",
-            [26] = "focus",
-            [27] = "cb_4",
-            [28] = "cb_7",
+            [2] = "rotate",
+            [3] = "filebrowserplus",
+            [4] = "night",
+            [5] = "sleep",
+            [6] = "read_goal_pages",
+            [7] = "read_goal_time",
+            [8] = "screenshot",
+            [9] = "ssh",
+            [10] = "localsend",
+            [11] = "restart",
+            [12] = "exit",
+            [13] = "settings",
+            [14] = "search",
+            [15] = "kosync",
+            [16] = "bluetooth",
+            [17] = "streak",
+            [18] = "opds",
+            [19] = "stats_progress",
+            [20] = "stats_calendar",
+            [21] = "battery_stats",
+            [22] = "bookfusion",
+            [23] = "focus",
         },
         ["button_style"] = "borderless",
         ["custom_builtin_icons"] = {
@@ -118,64 +111,12 @@ local config_defaults = {
             ["settings"] = "hugeicons--ai",
         },
         ["custom_builtin_labels"] = {},
-        ["custom_buttons"] = {
-            [1] = {
-                ["action"] = {
-                    ["simpleui_settings_window"] = true,
-                },
-                ["icon"] = "iconamoon--options-duotone",
-                ["id"] = "cb_1",
-            },
-            [2] = {
-                ["action"] = {
-                    ["stats_sync"] = true,
-                },
-                ["icon"] = "mdi--book-sync",
-                ["id"] = "cb_2",
-                ["label"] = "Sync",
-            },
-            [3] = {
-                ["action"] = {
-                    ["neo_menu_path"] = {
-                        [1] = "Readest",
-                        [2] = "İstatistikleri şimdi gönder",
-                    },
-                },
-                ["icon"] = "tabler--book-upload",
-                ["id"] = "cb_4",
-                ["label"] = "ReadUp",
-            },
-            [4] = {
-                ["action"] = {
-                    ["neo_menu_path"] = {
-                        [1] = "YENİ: Upload Statistics",
-                        [2] = "Upload Statistics Now",
-                    },
-                },
-                ["icon"] = "Dark_icons/statt",
-                ["id"] = "cb_7",
-                ["label"] = "KoStat",
-            },
-        },
-        ["favorite_groups"] = {
-            [1] = {
-                ["buttons"] = {
-                    [1] = "cb_2",
-                    [2] = "stats_calendar",
-                    [3] = "battery_stats",
-                    [4] = "cb_7",
-                    [5] = "cb_4",
-                },
-                ["icon"] = "Star",
-                ["id"] = "favgrp_1",
-                ["label"] = "Fav",
-                ["title"] = "Favori Butonlar",
-            },
-        },
+        ["custom_buttons"] = {},
+        ["favorite_groups"] = {},
         ["icon_scale_level"] = 2,
         ["label_size"] = 2,
-        ["next_custom_id"] = 8,
-        ["next_fav_id"] = 1,
+        ["next_custom_id"] = 0,
+        ["next_fav_id"] = 0,
         ["open_by_default"] = true,
         ["progress_pages"] = {
             ["10"] = false,
@@ -209,12 +150,7 @@ local config_defaults = {
             ["battery_stats"] = false,
             ["bluetooth"] = false,
             ["bookfusion"] = false,
-            ["cb_1"] = true,
-            ["cb_2"] = false,
-            ["cb_4"] = false,
-            ["cb_7"] = false,
             ["exit"] = true,
-            ["favgrp_1"] = true,
             ["filebrowserplus"] = true,
             ["focus"] = false,
             ["kosync"] = false,
@@ -306,6 +242,42 @@ local function loadConfig()
             in_order[cb.id] = true
         end
     end
+
+    -- Clean up orphaned custom/favorite ids (e.g. left over from earlier default
+    -- configs) and duplicate entries, so they neither eat button slots nor make a
+    -- newly created button with a reused id render twice.
+    -- Buttons converted to "fixed" keep their cb_N id but live in user_builtin_buttons.
+    for idx, ub in ipairs(config.user_builtin_buttons) do
+        if type(ub.id) == "string" then cb_ids[ub.id] = true end
+    end
+    local fg_ids = {}
+    for idx, fg in ipairs(config.favorite_groups) do
+        if type(fg.id) == "string" then fg_ids[fg.id] = true end
+    end
+    local function isOrphan(id)
+        if type(id) ~= "string" then return true end
+        if id:match("^cb_%d+$") then return not cb_ids[id] end
+        if id:match("^favgrp_%d+$") then return not fg_ids[id] end
+        return false
+    end
+    local seen, clean_order = {}, {}
+    for idx, id in ipairs(config.button_order) do
+        if not seen[id] and not isOrphan(id) then
+            seen[id] = true
+            table.insert(clean_order, id)
+        end
+    end
+    config.button_order = clean_order
+    for id in pairs(config.show_buttons) do
+        if isOrphan(id) then config.show_buttons[id] = nil end
+    end
+
+    -- Make sure the id counters never hand out an id that is already in use.
+    local max_cb, max_fg = 0, 0
+    for id in pairs(cb_ids) do max_cb = math.max(max_cb, tonumber(id:match("^cb_(%d+)$")) or 0) end
+    for id in pairs(fg_ids) do max_fg = math.max(max_fg, tonumber(id:match("^favgrp_(%d+)$")) or 0) end
+    config.next_custom_id = math.max(tonumber(config.next_custom_id) or 0, max_cb)
+    config.next_fav_id = math.max(tonumber(config.next_fav_id) or 0, max_fg)
 end
 
 local buildSettingsMenuItems
@@ -354,26 +326,6 @@ local function saveConfig()
 end
 
 loadConfig()
-
--- Cache for hasPlugin results (filesystem check is expensive; reset on config reload)
-local _plugin_exists_cache = {}
-local function hasPlugin(name)
-    if _plugin_exists_cache[name] ~= nil then return _plugin_exists_cache[name] end
-    if G_reader_settings:isTrue("plugin_" .. name .. "_enabled") then
-        _plugin_exists_cache[name] = true
-        return true
-    end
-    local ok_datastorage, DataStorage = pcall(require, "datastorage")
-    local data_dir = ok_datastorage and DataStorage and DataStorage.getDataDir and DataStorage:getDataDir() or nil
-    local candidates = { "plugins/" .. name .. ".koplugin/main.lua" }
-    if data_dir then table.insert(candidates, data_dir .. "/plugins/" .. name .. ".koplugin/main.lua") end
-    for idx, path in ipairs(candidates) do
-        local file = io.open(path, "r")
-        if file then file:close(); _plugin_exists_cache[name] = true; return true end
-    end
-    _plugin_exists_cache[name] = false
-    return false
-end
 
 -- Separate caches for ReaderUI and FileManager
 local _cached_reader_ui = nil
@@ -696,7 +648,7 @@ button_defs = {
                 left = ui.document:getTotalPagesLeft(pageno) or 0
             end
 
-            -- Ninja Motoru (Ninja Engine v4) Uyumluluğu
+            -- Ninja Engine v4 compatibility
             if ui and ui.document and ui.doc_settings then
                 local doc_settings = ui.doc_settings
                 local sync_enabled = doc_settings:readSetting("yanllsama_sync_enabled")
@@ -710,7 +662,7 @@ button_defs = {
                         local ratio = doc_settings:readSetting("yanllsama_screen_ratio") or 1.0
                         if doc_settings:readSetting("pagemap_chars_per_synthetic_page") then ratio = 1.0 end
                         
-                        -- Ratio ile ekran sayısını fiziksel sayfa sayısına dönüştür (sayfa hedefini tutturmak için)
+                        -- Convert screen pages to physical pages via the ratio (so the page goal counts real pages)
                         if ratio ~= 1.0 then
                             left = math.ceil(left / ratio)
                         end
@@ -721,7 +673,7 @@ button_defs = {
             if left and left > 0 then
                 NeoQuickSettings.page_goal_remaining = left
                 NeoQuickSettings.last_phys_page = nil
-                touch_menu:updateItems()
+                if touch_menu and touch_menu.updateItems then touch_menu:updateItems() end
                 local InfoMessage = require("ui/widget/infomessage")
                 require("ui/uimanager"):show(InfoMessage:new{
                     text = _("Goal set to chapter end: ") .. left .. _(" pages"),
@@ -1049,9 +1001,7 @@ button_defs = {
     },
 }
 
-local buildSettingsMenuItems
-
-local function createQuickSettingsPanel(touch_menu)
+createQuickSettingsPanel = function(touch_menu)
     if touch_menu._neo_just_toggled_group then
         touch_menu._neo_just_toggled_group = false
     else
@@ -1638,8 +1588,8 @@ local function buildCustomButtonSubItems(cb)
         callback = function(tm)
             if config_backup then
                 config = deepcopy(config_backup)
-                _settings.data.config = config
                 config_backup = nil
+                saveConfig()
             end
             if tm and tm.item_table_stack and #tm.item_table_stack > 0 then
                 table.remove(tm.item_table_stack)
@@ -1944,6 +1894,7 @@ local function buildCustomButtonSubItems(cb)
                 if id ~= cb.id then table.insert(new_order, id) end
             end
             config.button_order = new_order
+            config_backup = nil
             saveConfig()
             UIManager:show(require("ui/widget/infomessage"):new{
                 text = C_("Button removed."), timeout = 2,
@@ -1984,8 +1935,8 @@ buildFavoriteGroupEditor = function(fg)
         callback = function(tm)
             if config_backup then
                 config = deepcopy(config_backup)
-                _settings.data.config = config
                 config_backup = nil
+                saveConfig()
             end
             if tm and tm.item_table_stack and #tm.item_table_stack > 0 then
                 table.remove(tm.item_table_stack)
@@ -2204,6 +2155,7 @@ buildFavoriteGroupsManager = function()
         separator = true,
         keep_menu_open = true,
         callback = function(tm)
+            if not config_backup then config_backup = deepcopy(config) end
             config.next_fav_id = (config.next_fav_id or 0) + 1
             local new_fg = {
                 id = "favgrp_" .. tostring(config.next_fav_id),
@@ -3795,8 +3747,7 @@ function NeoQuickSettings:onPageUpdate(pageno)
         end
     end
 
-    local logger = require("logger")
-    logger.info("NeoQuickSettings: onPageUpdate pageno=", pageno, "phys_page=", phys_page, "last_phys_page=", NeoQuickSettings.last_phys_page, "remaining=", NeoQuickSettings.page_goal_remaining)
+    logger.dbg("NeoQuickSettings: onPageUpdate pageno=", pageno, "phys_page=", phys_page, "last_phys_page=", NeoQuickSettings.last_phys_page, "remaining=", NeoQuickSettings.page_goal_remaining)
 
     if NeoQuickSettings.last_phys_page ~= phys_page then
         if NeoQuickSettings.last_phys_page ~= nil then
@@ -3991,43 +3942,3 @@ end
 -- Clear common/ from package.loaded to prevent namespace collisions with subsequently loaded plugins (like Zenos)
 for k in pairs(package.loaded) do if k:match("^common/") then package.loaded[k] = nil end end
 return NeoQuickSettings
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
