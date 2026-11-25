@@ -7,9 +7,8 @@
    - `koreader/plugins/`
 3. **Important:** Inside the downloaded package, you will find a file named `neo.svg`. You **must** copy this file and place it inside KOReader's core icons directory:
    - `koreader/icons/neo.svg`
-4. If you previously installed Neo QuickSettings, delete the old `neo_quicksetting.koplugin` folder. Your settings are carried over automatically.
-5. Restart KOReader.
-6. You can now access NGQuickSettings from the KOReader top menu or assign it to a gesture!
+4. Restart KOReader.
+5. You can now access NGQuickSettings from the KOReader top menu or assign it to a gesture!
 
 ##  Credits & Acknowledgments
 

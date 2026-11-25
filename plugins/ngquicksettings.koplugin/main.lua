@@ -10,24 +10,6 @@ local NeoCaptureState = {
 
 local DataStorage     = require("datastorage")
 
--- One-time migration: the plugin was renamed from Neo QuickSettings, whose
--- settings lived in neo_quicksettings.lua. Move them over so users keep
--- their buttons. Must run before neo_i18n reads the settings file.
-do
-    local dir = DataStorage:getSettingsDir()
-    local old_path, new_path = dir .. "/neo_quicksettings.lua", dir .. "/ngquicksettings.lua"
-    local new_f = io.open(new_path, "r")
-    if new_f then
-        new_f:close()
-    else
-        local old_f = io.open(old_path, "r")
-        if old_f then
-            old_f:close()
-            os.rename(old_path, new_path)
-        end
-    end
-end
-
 local _src = debug.getinfo(1, "S").source or ""
 local _plugin_root = (_src:sub(1,1) == "@") and _src:sub(2):match("^(.*)/[^/]+$") or nil
 if _plugin_root and _plugin_root:sub(1,1) ~= "/" then
