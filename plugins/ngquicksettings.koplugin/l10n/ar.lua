@@ -47,7 +47,7 @@ return {
     ["Add / Manage Custom Buttons"] = "إضافة / إدارة الأزرار المخصصة",
     ["FileBrowser+"] = "FileBrowser+",
     ["SSH"] = "SSH",
-    ["Neo Quick Settings"] = "إعدادات Neo السريعة",
+    ["NGQuickSettings"] = "NGQuickSettings",
     ["Reader"] = "القارئ",
     ["Neo Mode"] = "وضع Neo",
     ["Custom"] = "مخصص",

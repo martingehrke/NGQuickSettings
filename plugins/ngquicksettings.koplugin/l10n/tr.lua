@@ -47,7 +47,7 @@ return {
     ["Add / Manage Custom Buttons"] = "Özel Buton Ekle / Yönet",
     ["FileBrowser+"] = "DosyaTarayıcı+",
     ["SSH"] = "SSH",
-    ["Neo Quick Settings"] = "Neo Hızlı Ayarlar",
+    ["NGQuickSettings"] = "NGQuickSettings",
     ["Reader"] = "Okuyucu",
     ["Neo Mode"] = "Neo Modu",
     ["Custom"] = "Özel",

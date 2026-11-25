@@ -6,7 +6,7 @@ local I18N = {}
 
 -- Determine the selected language
 local plugin_lang = "system"
-local settings_path = DataStorage:getSettingsDir() .. "/neo_quicksettings.lua"
+local settings_path = DataStorage:getSettingsDir() .. "/ngquicksettings.lua"
 local ok, settings = pcall(LuaSettings.open, LuaSettings, settings_path)
 if ok and settings and settings.data and settings.data.config and settings.data.config.plugin_language then
     plugin_lang = settings.data.config.plugin_language

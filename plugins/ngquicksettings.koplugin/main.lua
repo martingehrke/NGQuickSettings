@@ -1,6 +1,6 @@
 
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local NeoQuickSettings
+local NGQuickSettings
 
 local NeoCaptureState = {
     cb = nil,
@@ -9,6 +9,24 @@ local NeoCaptureState = {
 }
 
 local DataStorage     = require("datastorage")
+
+-- One-time migration: the plugin was renamed from Neo QuickSettings, whose
+-- settings lived in neo_quicksettings.lua. Move them over so users keep
+-- their buttons. Must run before neo_i18n reads the settings file.
+do
+    local dir = DataStorage:getSettingsDir()
+    local old_path, new_path = dir .. "/neo_quicksettings.lua", dir .. "/ngquicksettings.lua"
+    local new_f = io.open(new_path, "r")
+    if new_f then
+        new_f:close()
+    else
+        local old_f = io.open(old_path, "r")
+        if old_f then
+            old_f:close()
+            os.rename(old_path, new_path)
+        end
+    end
+end
 
 local _src = debug.getinfo(1, "S").source or ""
 local _plugin_root = (_src:sub(1,1) == "@") and _src:sub(2):match("^(.*)/[^/]+$") or nil
@@ -71,7 +89,7 @@ end
 
 local _icons_dir = _plugin_root and (_plugin_root .. "/icons/") or nil
 
-local _settings_path = DataStorage:getSettingsDir() .. "/neo_quicksettings.lua"
+local _settings_path = DataStorage:getSettingsDir() .. "/ngquicksettings.lua"
 local LuaSettings = require("luasettings")
 local _settings = LuaSettings:open(_settings_path)
 
@@ -440,7 +458,7 @@ end
 local function isReadingActive()
     local UIManager = require("ui/uimanager")
     if not UIManager._window_stack then return false end
-    if NeoQuickSettings._is_suspended then return false end
+    if NGQuickSettings._is_suspended then return false end
     
     local reader_idx = 0
     
@@ -538,12 +556,12 @@ button_defs = {
         icon = "quick_time",
         label = C_("Time Goal"),
         label_func = function()
-            if NeoQuickSettings.time_goal_remaining then
-                return tostring(NeoQuickSettings.time_goal_remaining) .. "m"
+            if NGQuickSettings.time_goal_remaining then
+                return tostring(NGQuickSettings.time_goal_remaining) .. "m"
             end
             return C_("Time Goal")
         end,
-        active_func = function() return NeoQuickSettings.time_goal_remaining ~= nil end,
+        active_func = function() return NGQuickSettings.time_goal_remaining ~= nil end,
         callback = function(touch_menu)
             if not getActiveReaderUI() then
                 showTopRightToast(_("Only available while reading a book"))
@@ -557,7 +575,7 @@ button_defs = {
                 local dialog
                 dialog = InputDialog:new{
                     title = _("Reading Time Goal (minutes)"),
-                    input = NeoQuickSettings.time_goal_remaining and tostring(NeoQuickSettings.time_goal_remaining) or "30",
+                    input = NGQuickSettings.time_goal_remaining and tostring(NGQuickSettings.time_goal_remaining) or "30",
                     type = "number",
                     buttons = {{
                         {
@@ -570,12 +588,12 @@ button_defs = {
                             callback = function()
                                 local val = tonumber(dialog:getInputText())
                                 if val and val > 0 then
-                                    NeoQuickSettings.time_goal_remaining = val
-                                    NeoQuickSettings.time_goal_id = (NeoQuickSettings.time_goal_id or 0) + 1
+                                    NGQuickSettings.time_goal_remaining = val
+                                    NGQuickSettings.time_goal_id = (NGQuickSettings.time_goal_id or 0) + 1
                                     UIManager:show(InfoMessage:new{ text = _("Time goal started: ") .. val .. _(" min"), timeout = 2 })
                                 else
-                                    NeoQuickSettings.time_goal_remaining = nil
-                                    NeoQuickSettings.time_goal_id = nil
+                                    NGQuickSettings.time_goal_remaining = nil
+                                    NGQuickSettings.time_goal_id = nil
                                 end
                                 UIManager:close(dialog)
                                 if touch_menu and touch_menu.updateItems then touch_menu:updateItems(touch_menu.page or 1) end
@@ -586,12 +604,12 @@ button_defs = {
                 UIManager:show(dialog)
             end
 
-            if NeoQuickSettings.time_goal_remaining then
+            if NGQuickSettings.time_goal_remaining then
                 local ButtonDialog = require("ui/widget/buttondialog")
                 local dialog
                 dialog = ButtonDialog:new{
                     
-                    title = _("You have an active time goal (") .. NeoQuickSettings.time_goal_remaining .. _(" min remaining).\n\nDo you want to cancel it?"),
+                    title = _("You have an active time goal (") .. NGQuickSettings.time_goal_remaining .. _(" min remaining).\n\nDo you want to cancel it?"),
                     title_align = "center",
                     use_info_style = false,
                     buttons = {
@@ -599,8 +617,8 @@ button_defs = {
                             {
                                 text = _("Cancel Goal"),
                                 callback = function()
-                                    NeoQuickSettings.time_goal_remaining = nil
-                                    NeoQuickSettings.time_goal_id = (NeoQuickSettings.time_goal_id or 0) + 1
+                                    NGQuickSettings.time_goal_remaining = nil
+                                    NGQuickSettings.time_goal_id = (NGQuickSettings.time_goal_id or 0) + 1
                                     if touch_menu and touch_menu.updateItems then touch_menu:updateItems(touch_menu.page or 1) end
                                     UIManager:close(dialog)
                                 end,
@@ -627,12 +645,12 @@ button_defs = {
         icon = "quick_bookmark",
         label = C_("Page Goal"),
         label_func = function()
-            if NeoQuickSettings.page_goal_remaining then
-                return tostring(NeoQuickSettings.page_goal_remaining) .. "p"
+            if NGQuickSettings.page_goal_remaining then
+                return tostring(NGQuickSettings.page_goal_remaining) .. "p"
             end
             return C_("Page Goal")
         end,
-        active_func = function() return NeoQuickSettings.page_goal_remaining ~= nil end,
+        active_func = function() return NGQuickSettings.page_goal_remaining ~= nil end,
         hold_callback = function(touch_menu)
             local ui = getActiveReaderUI()
             if not ui then
@@ -671,8 +689,8 @@ button_defs = {
             end
 
             if left and left > 0 then
-                NeoQuickSettings.page_goal_remaining = left
-                NeoQuickSettings.last_phys_page = nil
+                NGQuickSettings.page_goal_remaining = left
+                NGQuickSettings.last_phys_page = nil
                 if touch_menu and touch_menu.updateItems then touch_menu:updateItems() end
                 local InfoMessage = require("ui/widget/infomessage")
                 require("ui/uimanager"):show(InfoMessage:new{
@@ -696,7 +714,7 @@ button_defs = {
                 local dialog
                 dialog = InputDialog:new{
                     title = _("Reading Page Goal"),
-                    input = NeoQuickSettings.page_goal_remaining and tostring(NeoQuickSettings.page_goal_remaining) or "10",
+                    input = NGQuickSettings.page_goal_remaining and tostring(NGQuickSettings.page_goal_remaining) or "10",
                     type = "number",
                     buttons = {{
                         {
@@ -709,13 +727,13 @@ button_defs = {
                             callback = function()
                                 local val = tonumber(dialog:getInputText())
                                 if val and val > 0 then
-                                    NeoQuickSettings.page_goal_remaining = val
-                                    NeoQuickSettings.last_phys_page = nil
+                                    NGQuickSettings.page_goal_remaining = val
+                                    NGQuickSettings.last_phys_page = nil
                                     local InfoMessage = require("ui/widget/infomessage")
                                     require("ui/uimanager"):show(InfoMessage:new{ text = _("Page goal started: ") .. val .. _(" pages"), timeout = 2 })
                                 else
-                                    NeoQuickSettings.page_goal_remaining = nil
-                                    NeoQuickSettings.last_phys_page = nil
+                                    NGQuickSettings.page_goal_remaining = nil
+                                    NGQuickSettings.last_phys_page = nil
                                 end
                                 require("ui/uimanager"):close(dialog)
                                 if touch_menu and touch_menu.updateItems then touch_menu:updateItems(touch_menu.page or 1) end
@@ -735,12 +753,12 @@ button_defs = {
                 UIManager:show(dialog)
             end
 
-            if NeoQuickSettings.page_goal_remaining then
+            if NGQuickSettings.page_goal_remaining then
                 local ButtonDialog = require("ui/widget/buttondialog")
                 local dialog
                 dialog = ButtonDialog:new{
                     
-                    title = _("You have an active page goal (") .. NeoQuickSettings.page_goal_remaining .. _(" pages remaining).\n\nDo you want to cancel it?"),
+                    title = _("You have an active page goal (") .. NGQuickSettings.page_goal_remaining .. _(" pages remaining).\n\nDo you want to cancel it?"),
                     title_align = "center",
                     use_info_style = false,
                     buttons = {
@@ -748,8 +766,8 @@ button_defs = {
                             {
                                 text = _("Cancel Goal"),
                                 callback = function()
-                                    NeoQuickSettings.page_goal_remaining = nil
-                                    NeoQuickSettings.last_phys_page = nil
+                                    NGQuickSettings.page_goal_remaining = nil
+                                    NGQuickSettings.last_phys_page = nil
                                     if touch_menu and touch_menu.updateItems then touch_menu:updateItems(touch_menu.page or 1) end
                                     UIManager:close(dialog)
                                 end,
@@ -1064,7 +1082,7 @@ createQuickSettingsPanel = function(touch_menu)
                                         end
                                     elseif tab.sub_item_table_func then
                                         -- skip our own neo tab to avoid polluting the search
-                                        if tab.id ~= "neo_quicksettings" then
+                                        if tab.id ~= "ngquicksettings" then
                                             local ok, items = pcall(tab.sub_item_table_func)
                                             if ok and type(items) == "table" then
                                                 for _, item in ipairs(items) do
@@ -1639,8 +1657,8 @@ local function buildCustomButtonSubItems(cb)
                         NeoCaptureState.path = {}
                         NeoCaptureState.active = true
                         tm:closeMenu()
-                        if NeoQuickSettings and NeoQuickSettings.closeMenu then
-                            NeoQuickSettings:closeMenu()
+                        if NGQuickSettings and NGQuickSettings.closeMenu then
+                            NGQuickSettings:closeMenu()
                         end
                         local main_ui = getMainUI()
                         if main_ui and main_ui.menu and main_ui.menu.onShowMenu then
@@ -3548,20 +3566,20 @@ local function applyTouchMenuPatches()
 end
 
 local quick_settings_tab = {
-    id      = "neo_quicksettings",
+    id      = "ngquicksettings",
     icon    = "neo",
     remember = false,
     panel   = createQuickSettingsPanel,
             sub_item_table_func = buildSettingsMenuItems,
 }
 
-local _plugin_folder = _src:match("([^/]+)%.koplugin/main%.lua$") or "neo_quicksetting"
-NeoQuickSettings = WidgetContainer:extend{
+local _plugin_folder = _src:match("([^/]+)%.koplugin/main%.lua$") or "ngquicksettings"
+NGQuickSettings = WidgetContainer:extend{
     name    = _plugin_folder,
     version = 1,
 }
 
-function NeoQuickSettings:init()
+function NGQuickSettings:init()
     local Dispatcher = require("dispatcher")
     if self.onDispatcherRegisterActions then self:onDispatcherRegisterActions() end
     -- Cache UI reference: distinguish ReaderUI (has document) from FileManager
@@ -3605,7 +3623,7 @@ function NeoQuickSettings:init()
             -- Remove any previously injected tab first
             if type(m_self.tab_item_table) == "table" then
                 for i = #m_self.tab_item_table, 1, -1 do
-                    if m_self.tab_item_table[i].id == "neo_quicksettings" then
+                    if m_self.tab_item_table[i].id == "ngquicksettings" then
                         table.remove(m_self.tab_item_table, i)
                         break
                     end
@@ -3685,14 +3703,14 @@ function NeoQuickSettings:init()
     end
 end
 
-function NeoQuickSettings:onFlushSettings()
+function NGQuickSettings:onFlushSettings()
     saveConfig()
 end
 
-function NeoQuickSettings:addToMainMenu(menu_items)
+function NGQuickSettings:addToMainMenu(menu_items)
     -- Use the actual plugin folder name as key so disable works correctly
     menu_items[_plugin_folder] = {
-        text = C_("Neo Quick Settings"),
+        text = C_("NGQuickSettings"),
         sub_item_table_func = function()
             return buildSettingsMenuItems()
         end,
@@ -3700,12 +3718,12 @@ function NeoQuickSettings:addToMainMenu(menu_items)
 end
 
 
-function NeoQuickSettings:onDispatcherRegisterActions()
+function NGQuickSettings:onDispatcherRegisterActions()
     local Dispatcher = require("dispatcher")
     Dispatcher:registerAction("neo_capture_menu_action", { category="none", event="NeoCaptureMenuItem", title=_("Capture Menu Item (Neo)"), general=true })
 end
 
-function NeoQuickSettings:onNeoCaptureMenuItem()
+function NGQuickSettings:onNeoCaptureMenuItem()
     NeoCaptureState.active = true
     NeoCaptureState.path = {}
     NeoCaptureState.cb = nil -- flag to indicate creating a new button
@@ -3714,8 +3732,8 @@ function NeoQuickSettings:onNeoCaptureMenuItem()
     return true
 end
 
-function NeoQuickSettings:onPageUpdate(pageno)
-    if not NeoQuickSettings.page_goal_remaining then return end
+function NGQuickSettings:onPageUpdate(pageno)
+    if not NGQuickSettings.page_goal_remaining then return end
 
     local ui = self.ui or require("ui/uimanager"):getActiveWindow()
     local phys_page = pageno
@@ -3747,18 +3765,18 @@ function NeoQuickSettings:onPageUpdate(pageno)
         end
     end
 
-    logger.dbg("NeoQuickSettings: onPageUpdate pageno=", pageno, "phys_page=", phys_page, "last_phys_page=", NeoQuickSettings.last_phys_page, "remaining=", NeoQuickSettings.page_goal_remaining)
+    logger.dbg("NGQuickSettings: onPageUpdate pageno=", pageno, "phys_page=", phys_page, "last_phys_page=", NGQuickSettings.last_phys_page, "remaining=", NGQuickSettings.page_goal_remaining)
 
-    if NeoQuickSettings.last_phys_page ~= phys_page then
-        if NeoQuickSettings.last_phys_page ~= nil then
-            NeoQuickSettings.session_pages_read = (NeoQuickSettings.session_pages_read or 0) + 1
+    if NGQuickSettings.last_phys_page ~= phys_page then
+        if NGQuickSettings.last_phys_page ~= nil then
+            NGQuickSettings.session_pages_read = (NGQuickSettings.session_pages_read or 0) + 1
             
-            if NeoQuickSettings.page_goal_remaining then
-                NeoQuickSettings.page_goal_remaining = NeoQuickSettings.page_goal_remaining - 1
+            if NGQuickSettings.page_goal_remaining then
+                NGQuickSettings.page_goal_remaining = NGQuickSettings.page_goal_remaining - 1
             end
             
-            local r = NeoQuickSettings.page_goal_remaining
-            local pr = NeoQuickSettings.session_pages_read
+            local r = NGQuickSettings.page_goal_remaining
+            local pr = NGQuickSettings.session_pages_read
             local trigger_prog = false
             local trigger_goal = false
             
@@ -3782,9 +3800,9 @@ function NeoQuickSettings:onPageUpdate(pageno)
                 if msg then showTopRightToast(msg) end
             end
 
-            if NeoQuickSettings.page_goal_remaining and NeoQuickSettings.page_goal_remaining <= 0 then
-                NeoQuickSettings.page_goal_remaining = nil
-                NeoQuickSettings.last_phys_page = nil
+            if NGQuickSettings.page_goal_remaining and NGQuickSettings.page_goal_remaining <= 0 then
+                NGQuickSettings.page_goal_remaining = nil
+                NGQuickSettings.last_phys_page = nil
                 local ButtonDialog = require("ui/widget/buttondialog")
                 local dialog
                 dialog = ButtonDialog:new{
@@ -3818,14 +3836,14 @@ function NeoQuickSettings:onPageUpdate(pageno)
                 return
             end
         end
-        NeoQuickSettings.last_phys_page = phys_page
+        NGQuickSettings.last_phys_page = phys_page
     end
 end
 
-function NeoQuickSettings:onReaderReady()
-    NeoQuickSettings.session_pages_read = 0
-    NeoQuickSettings.session_time_read = 0
-    NeoQuickSettings._session_seconds = 0
+function NGQuickSettings:onReaderReady()
+    NGQuickSettings.session_pages_read = 0
+    NGQuickSettings.session_time_read = 0
+    NGQuickSettings._session_seconds = 0
     
     if self.progress_timer then
         require("ui/uimanager"):unschedule(self.progress_timer)
@@ -3841,20 +3859,20 @@ function NeoQuickSettings:onReaderReady()
         
         require("ui/uimanager"):scheduleIn(10, progressTick)
         
-        if NeoQuickSettings._is_suspended then return end
+        if NGQuickSettings._is_suspended then return end
         if not isReadingActive() then return end
         
-        NeoQuickSettings._session_seconds = (NeoQuickSettings._session_seconds or 0) + 10
-        if NeoQuickSettings._session_seconds >= 60 then
-            NeoQuickSettings._session_seconds = NeoQuickSettings._session_seconds - 60
-            NeoQuickSettings.session_time_read = (NeoQuickSettings.session_time_read or 0) + 1
+        NGQuickSettings._session_seconds = (NGQuickSettings._session_seconds or 0) + 10
+        if NGQuickSettings._session_seconds >= 60 then
+            NGQuickSettings._session_seconds = NGQuickSettings._session_seconds - 60
+            NGQuickSettings.session_time_read = (NGQuickSettings.session_time_read or 0) + 1
             
-            if NeoQuickSettings.time_goal_remaining then
-                NeoQuickSettings.time_goal_remaining = NeoQuickSettings.time_goal_remaining - 1
+            if NGQuickSettings.time_goal_remaining then
+                NGQuickSettings.time_goal_remaining = NGQuickSettings.time_goal_remaining - 1
             end
             
-            local r = NeoQuickSettings.time_goal_remaining
-            local tr = NeoQuickSettings.session_time_read
+            local r = NGQuickSettings.time_goal_remaining
+            local tr = NGQuickSettings.session_time_read
             local trigger_prog = false
             local trigger_goal = false
             
@@ -3877,9 +3895,9 @@ function NeoQuickSettings:onReaderReady()
                 if msg then showTopRightToast(msg) end
             end
             
-            if NeoQuickSettings.time_goal_remaining and NeoQuickSettings.time_goal_remaining <= 0 then
-                NeoQuickSettings.time_goal_remaining = nil
-                NeoQuickSettings.time_goal_id = nil
+            if NGQuickSettings.time_goal_remaining and NGQuickSettings.time_goal_remaining <= 0 then
+                NGQuickSettings.time_goal_remaining = nil
+                NGQuickSettings.time_goal_id = nil
                 local ButtonDialog = require("ui/widget/buttondialog")
                 local d
                 d = ButtonDialog:new{
@@ -3917,28 +3935,28 @@ function NeoQuickSettings:onReaderReady()
     require("ui/uimanager"):scheduleIn(3, progressTick)
 end
 
-function NeoQuickSettings:onSuspend()
-    NeoQuickSettings._is_suspended = true
+function NGQuickSettings:onSuspend()
+    NGQuickSettings._is_suspended = true
 end
 
-function NeoQuickSettings:onResume()
-    NeoQuickSettings._is_suspended = false
+function NGQuickSettings:onResume()
+    NGQuickSettings._is_suspended = false
 end
-function NeoQuickSettings:onCloseDocument()
+function NGQuickSettings:onCloseDocument()
     if self.progress_timer then
         require("ui/uimanager"):unschedule(self.progress_timer)
         self.progress_timer = nil
     end
-    NeoQuickSettings._session_seconds = 0
-    NeoQuickSettings.time_goal_remaining = nil
-    NeoQuickSettings.time_goal_id = nil
-    NeoQuickSettings.page_goal_remaining = nil
-    NeoQuickSettings.page_goal_id = nil
-    NeoQuickSettings.session_pages_read = 0
-    NeoQuickSettings.session_time_read = 0
-    NeoQuickSettings.last_phys_page = nil
+    NGQuickSettings._session_seconds = 0
+    NGQuickSettings.time_goal_remaining = nil
+    NGQuickSettings.time_goal_id = nil
+    NGQuickSettings.page_goal_remaining = nil
+    NGQuickSettings.page_goal_id = nil
+    NGQuickSettings.session_pages_read = 0
+    NGQuickSettings.session_time_read = 0
+    NGQuickSettings.last_phys_page = nil
 end
 
 -- Clear common/ from package.loaded to prevent namespace collisions with subsequently loaded plugins (like Zenos)
 for k in pairs(package.loaded) do if k:match("^common/") then package.loaded[k] = nil end end
-return NeoQuickSettings
+return NGQuickSettings

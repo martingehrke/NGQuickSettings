@@ -47,7 +47,7 @@ return {
     ["Add / Manage Custom Buttons"] = "사용자 정의 버튼 추가 / 관리",
     ["FileBrowser+"] = "파일 브라우저+",
     ["SSH"] = "SSH",
-    ["Neo Quick Settings"] = "Neo 빠른 설정",
+    ["NGQuickSettings"] = "NGQuickSettings",
     ["Reader"] = "리더",
     ["Neo Mode"] = "Neo 모드",
     ["Custom"] = "사용자 정의",

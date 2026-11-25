@@ -47,7 +47,7 @@ return {
     ["Add / Manage Custom Buttons"] = "Adicionar / Gerenciar Botões Personalizados",
     ["FileBrowser+"] = "FileBrowser+",
     ["SSH"] = "SSH",
-    ["Neo Quick Settings"] = "Configurações Rápidas Neo",
+    ["NGQuickSettings"] = "NGQuickSettings",
     ["Reader"] = "Leitor",
     ["Neo Mode"] = "Modo Neo",
     ["Custom"] = "Personalizado",

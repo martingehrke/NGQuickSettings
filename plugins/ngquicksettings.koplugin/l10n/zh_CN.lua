@@ -47,7 +47,7 @@ return {
     ["Add / Manage Custom Buttons"] = "添加 / 管理自定义按钮",
     ["FileBrowser+"] = "文件浏览器+",
     ["SSH"] = "SSH",
-    ["Neo Quick Settings"] = "Neo 快速设置",
+    ["NGQuickSettings"] = "NGQuickSettings",
     ["Reader"] = "阅读器",
     ["Neo Mode"] = "Neo 模式",
     ["Custom"] = "自定义",
