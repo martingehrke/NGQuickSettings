@@ -100,7 +100,6 @@ local config_defaults = {
             [20] = "stats_calendar",
             [21] = "battery_stats",
             [22] = "bookfusion",
-            [23] = "focus",
         },
         ["button_style"] = "borderless",
         ["custom_builtin_icons"] = {
@@ -150,22 +149,21 @@ local config_defaults = {
             ["battery_stats"] = false,
             ["bluetooth"] = false,
             ["bookfusion"] = false,
-            ["exit"] = true,
-            ["filebrowserplus"] = true,
-            ["focus"] = false,
+            ["exit"] = false,
+            ["filebrowserplus"] = false,
             ["kosync"] = false,
-            ["localsend"] = true,
+            ["localsend"] = false,
             ["night"] = true,
             ["opds"] = false,
-            ["read_goal_pages"] = true,
-            ["read_goal_time"] = true,
-            ["restart"] = true,
-            ["rotate"] = true,
-            ["screenshot"] = true,
+            ["read_goal_pages"] = false,
+            ["read_goal_time"] = false,
+            ["restart"] = false,
+            ["rotate"] = false,
+            ["screenshot"] = false,
             ["search"] = false,
             ["settings"] = true,
             ["sleep"] = true,
-            ["ssh"] = true,
+            ["ssh"] = false,
             ["stats_calendar"] = false,
             ["stats_progress"] = false,
             ["streak"] = false,
@@ -535,7 +533,7 @@ end
 local button_defs
 button_defs = {
     read_goal_time = {
-        icon = "quick_time",
+        icon = "mdi--book-clock",
         label = C_("Time Goal"),
         label_func = function()
             if NGQuickSettings.time_goal_remaining then
@@ -624,7 +622,7 @@ button_defs = {
         end,
     },
     read_goal_pages = {
-        icon = "quick_bookmark",
+        icon = "mdi--book-check",
         label = C_("Page Goal"),
         label_func = function()
             if NGQuickSettings.page_goal_remaining then
@@ -773,7 +771,7 @@ button_defs = {
         end,
     },
     wifi = {
-        icon  = "quick_wifi",
+        icon  = "quick_wifi_new",
         label = C_("Wi-Fi"),
         label_func  = function()
             if NetworkMgr:isWifiOn() then
@@ -797,7 +795,7 @@ button_defs = {
         end,
     },
     night = {
-        icon  = "quick_nightmode",
+        icon  = "quick_nightmode_new",
         label = C_("Night"),
         active_func = function() return G_reader_settings:isTrue("night_mode") end,
         callback = function(touch_menu)
@@ -810,14 +808,14 @@ button_defs = {
         end,
     },
     rotate = {
-        icon  = "quick_rotate",
+        icon  = "quick_rotate_new",
         label = C_("Rotate"),
         callback = function()
             UIManager:broadcastEvent(Event:new("IterateRotation"))
         end,
     },
     sleep = {
-        icon  = "quick_sleep",
+        icon  = "quick_sleep_new",
         label = C_("Sleep"),
         callback = function()
             if Device:canSuspend() then
@@ -828,14 +826,14 @@ button_defs = {
         end,
     },
     restart = {
-        icon  = "quick_restart",
+        icon  = "quick_restart_new",
         label = C_("Restart"),
         callback = function()
             local SlideConfirmBox = require("slideconfirmbox")
             UIManager:show(SlideConfirmBox:new{
                                 title = _("Restart?"),
                 text  = _("Swipe to restart"),
-                icon  = "quick_restart",
+                icon  = "quick_restart_new",
                 on_confirm = function()
                     UIManager:broadcastEvent(Event:new("Restart"))
                 end,
@@ -843,14 +841,14 @@ button_defs = {
         end,
     },
     exit = {
-        icon  = "quick_exit",
+        icon  = "quick_exit_new",
         label = C_("Exit"),
         callback = function()
             local SlideConfirmBox = require("slideconfirmbox")
             UIManager:show(SlideConfirmBox:new{
                                 title = _("Exit?"),
                 text  = _("Swipe to exit"),
-                icon  = "quick_exit",
+                icon  = "quick_exit_new",
                 on_confirm = function()
                     UIManager:broadcastEvent(Event:new("Exit"))
                 end,
@@ -858,7 +856,7 @@ button_defs = {
         end,
     },
     search = {
-        icon  = "quick_search",
+        icon  = "quick_search_new",
         label = C_("Search"),
         callback = function()
             UIManager:broadcastEvent(Event:new("ShowFileSearch"))
@@ -886,7 +884,7 @@ button_defs = {
         end,
     },
     filebrowserplus = {
-        icon  = "quick_filebrowser_new",
+        icon  = "quick_filebrowser",
         label = C_("FileBrowser+"),
         active_func = function()
             local ok, fb = pcall(require, "plugins/filebrowserplus.koplugin/main")
@@ -902,7 +900,7 @@ button_defs = {
         end,
     },
     ssh = {
-        icon  = "quick_connections_new",
+        icon  = "quick_connections",
         label = C_("SSH"),
         active_func = function()
             local ok, ssh = pcall(require, "plugins/ssh.koplugin/main")
@@ -918,7 +916,7 @@ button_defs = {
         end,
     },
     bluetooth = {
-        icon  = "quick_connections_new",
+        icon  = "quick_connections",
         label = C_("Bluetooth"),
         callback = function(touch_menu)
             touch_menu:closeMenu()
@@ -964,7 +962,7 @@ button_defs = {
         end,
     },
     localsend = {
-        icon = "quick_localsend_new",
+        icon = "quick_localsend",
         label = C_("LocalSend"),
         callback = function(touch_menu)
             UIManager:broadcastEvent(Event:new("ToggleLocalSend"))
@@ -976,7 +974,7 @@ button_defs = {
         end,
     },
     bookfusion = {
-        icon = "quick_bookfusion_new",
+        icon = "book.opened",
         label = C_("BookFusion"),
         callback = function(touch_menu)
             touch_menu:closeMenu()
@@ -990,13 +988,6 @@ button_defs = {
                 return
             end
             showPluginMissingMessage(C_("BookFusion plugin is not installed."))
-        end,
-    },
-    focus = {
-        icon = "quick_focus_new",
-        label = C_("Focus"),
-        callback = function()
-            showPluginMissingMessage(C_("Focus mode control is available in the quicksettings plugin build."))
         end,
     },
 }
@@ -1201,7 +1192,7 @@ createQuickSettingsPanel = function(touch_menu)
     do
         local _bsmi = buildSettingsMenuItems
         button_defs["settings"] = {
-            icon  = "settings",
+            icon  = "appbar.settings",
             label = C_("Settings"),
             callback = function(tm)
                 if not _bsmi then return end
@@ -2269,7 +2260,6 @@ buildSettingsMenuItems = function()
         { key = "battery_stats",  label = C_("Battery") },
         { key = "localsend",  label = C_("LocalSend") },
         { key = "bookfusion", label = C_("BookFusion") },
-        { key = "focus",      label = C_("Focus") },
         { key = "read_goal_time",  label = C_("Time Goal") },
         { key = "read_goal_pages", label = C_("Page Goal") },
         { key = "settings",   label = C_("Settings") },
@@ -3627,7 +3617,7 @@ function NGQuickSettings:init()
                         UIManager:show(SlideConfirmBox:new{
                                             title = _("Exit?"),
                             text  = _("Swipe to exit"),
-                            icon  = "quick_exit",
+                            icon  = "quick_exit_new",
                             on_confirm = function() UIManager:broadcastEvent(Event:new("Exit")) end
                         })
                     end
@@ -3639,7 +3629,7 @@ function NGQuickSettings:init()
                         UIManager:show(SlideConfirmBox:new{
                                             title = _("Restart?"),
                             text  = _("Swipe to start"),
-                            icon  = "quick_restart",
+                            icon  = "quick_restart_new",
                             on_confirm = function() UIManager:broadcastEvent(Event:new("Restart")) end
                         })
                     end
@@ -3651,7 +3641,7 @@ function NGQuickSettings:init()
                         UIManager:show(SlideConfirmBox:new{
                                             title = _("Power off?"),
                             text  = _("Swipe to exit"),
-                            icon  = "quick_poweroff",
+                            icon  = "power",
                             on_confirm = function() UIManager:nextTick(UIManager.poweroff_action) end
                         })
                     end
@@ -3663,7 +3653,7 @@ function NGQuickSettings:init()
                         UIManager:show(SlideConfirmBox:new{
                                             title = _("Reboot device?"),
                             text  = _("Swipe to start"),
-                            icon  = "quick_restart",
+                            icon  = "quick_restart_new",
                             on_confirm = function() UIManager:nextTick(UIManager.reboot_action) end
                         })
                     end

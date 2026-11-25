@@ -93,7 +93,7 @@ function M.resolveIcon(plugin_icons_dir, name)
         local p = M.resolveLocalIcon(plugin_icons_dir, name)
         if p then return p end
         
-        p = M.resolveLocalIcon(plugin_icons_dir .. "default_ico/", name)
+        p = M.resolveLocalIcon(plugin_icons_dir .. "Dark_icons/", name)
         if p then return p end
     end
     
